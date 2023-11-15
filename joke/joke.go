@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"gorm.io/driver/sqlite"
@@ -52,8 +53,22 @@ type Message struct {
 }
 
 func main() {
+	// get db path from env
+	dbPath := os.Getenv("JOKEDB")
+	if dbPath == "" {
+		// 获取当前执行文件的路径
+	    executable, err := os.Executable()
+	    if err != nil {
+	    	panic(err)
+	    }
+
+	    // 使用filepath包构建路径
+	    parentDir := filepath.Dir(executable)
+	    dbPath = filepath.Join(parentDir, "mydatabase.sqlite3")
+	}
+
 	// 连接数据库
-	db, err := gorm.Open(sqlite.Open("mydatabase.sqlite3"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
 	if err != nil {
 		panic("无法连接到数据库")
 	}
@@ -90,13 +105,15 @@ func main() {
 		db.Create(&joke)
 	}
 
+	// TODO: send message to wechat by webhook
+
 }
 
 func request() ([]byte, error) {
 	uri := "https://eolink.o.apispace.com/xhdq/common/joke/getJokesByRandom"
 
 	payload := url.Values{}
-	payload.Set("pageSize", "5")
+	payload.Set("pageSize", "20")
 	req, _ := http.NewRequest("POST", uri, strings.NewReader(payload.Encode()))
 
 	req.Header.Add("X-APISpace-Token", os.Getenv("X_APISPACE_TOKEN"))

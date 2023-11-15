@@ -1,3 +1,5 @@
+Set-Location $PSScriptRoot
+
 # 读取.env文件内容
 Get-Content .env | ForEach-Object {
     # 分割键和值
